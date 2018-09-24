@@ -1,26 +1,40 @@
-#!/bin/sh
+#!/bin/bash
 ##################################################
 #Script to create and boot a Vagrant Box : Ubuntu
+#Author : Naveen Kumar HS
+#Version : 1.0
 ##################################################
-TIMESTAMP=`date "+%Y-%m-%d %H:%M:%S"`
-#Download Vagrant
 
+####VARIABLES###
+TIMESTAMP=`date "+%Y-%m-%d %H:%M:%S"`
+VAGRANT_CMD='/usr/bin/vagrant'
+VAGRANT_BOX_NAME='ubuntu64'
+VAGRANT_BOX_IMAGE='ubuntu/trusty64'
+VAGRANT_OS='ubuntu/boxes/trusty64'
+VAGRANT_OS_VER='20180919.0.0'
+VAGRANT_BOX="https://app.vagrantup.com/$VAGRANT_OS/versions/$VAGRANT_OS_VER/providers/virtualbox.box"
+VAGRANT_WORKING_DIR="/vagrant/$VAGRANT_BOX_NAME"
+VAGRANT_LOG='/tmp/install.log'
+declare -a PACKAGE_LIST=("virtualbox" "vagrant")
+
+####FUNCTION: To check command status####
 check_command_sccess()
 {
         if [ $? -eq 0 ]
         then
                 echo "$TIMESTAMP : $1"
         else
-                echo "$TIMESTAMP : $2 \nCheck /tmp/install.log for errors"
+                echo "$TIMESTAMP : $2 Check /tmp/install.log for errors"
+                exit
         fi
 }
-
+####FUNCTION: To install packages####
 install_package()
 {
 if [ "$#" -eq 3 ]
 then
-        apt-get update
-        apt-get install $1 -y >>/tmp/install.log 2>&1
+        apt-get update >>$VAGRANT_LOG 2>&1
+        apt-get install $1 -y >>$VAGRANT_LOG 2>&1
         check_command_sccess "$2" "$3"
 else
         echo "Usage: install_package <pkgname> <msg1> <msg2>"
@@ -28,33 +42,34 @@ else
 fi
 }
 
-# Download and Install viratual box which is pre-requisite for vagrant
+#Install Pacakges
 
-        echo "$TIMESTAMP : Download and Install Oracle Virtualbox, a pre-requisite for Vagrant"
-        install_package "virtualbox" "Oracle Virtualbox Installation completed" "Oracle Virtualbox Download/installation failed. Check install.log for errors"
+for package in "${PACKAGE_LIST[@]}"
+do
+        install_package $package "$package Installation completed." "$package Installation failed."
+done
 
-# Download and install  Vagrant package
-
-        echo "$TIMESTAMP : Downloading and installting the vagrant package for ubuntu from https://vagrant.io"
-        #wget -nc  https://releases.hashicorp.com/vagrant/2.1.5/vagrant_2.1.5_x86_64.deb1 -P /tmp >>/tmp/install.log 2>&1
-        install_package "vagrant" "Vagrant Installation completed" "Vagrant Download/installation failed. Check install.log for errors"
-
-# Download Vagrant Box : Ubuntu/trusty64
-        echo "Creating directory for Vagrant box"
-        mkdir -p /vagrant/ubuntu64
-        cd /vagrant/ubuntu64
-        echo "Install/Add ubuntu Vagrant box"
-        /usr/bin/vagrant box add ubuntu/trusty64 https://app.vagrantup.com/ubuntu/boxes/trusty64/versions/20180919.0.0/providers/virtualbox.box
-        check_command_sccess "Installation of Vagrant Ubuntu Box Completed" "Installation of Vagrant Ubuntu Box Failed"
+# Download Vagrant Box
+        echo "$TIMESTAMP : Creating working directory for Vagrant box $VAGRANT_BOX_NAME."
+        mkdir -p $VAGRANT_WORKING_DIR
+        cd $VAGRANT_WORKING_DIR;pwd
+        echo "$TIMESTAMP : Install/Add $VAGRANT_BOX_NAME Vagrant box."
+        $VAGRANT_CMD box add $VAGRANT_BOX_IMAGE $VAGRANT_BOX_IMAGE_URL >>$VAGRANT_LOG 2>&1
+        check_command_sccess "Vagrant box $VAGRANT_BOX_NAME Successfully added." "Vagrant box $VAGRANT_BOX_NAME failed."
 
 #Creating Vagrant file
 
-        /usr/bin/vagrant init ubuntu/trusty64
+        $VAGRANT_CMD init $VAGRANT_BOX_NAME >>$VAGRANT_LOG 2>&1
 
 #Brining Vagrant box up
-
-        /usr/bin/vagrant up
-        check_command_sccess "Vagrant box is up and running" "Vagrant box having issues with booting"
+        echo "$TIMESTAMP :Create Environment by running vagrant up"
+        $VAGRANT_CMD up >>$VAGRANT_LOG 2>&1
+        check_command_sccess "Vagrant box $VAGRANT_BOX_NAME is up and running" "Vagrant box $VAGRANT_BOX_NAME having issues with booting"
+        echo "$TIMESTAMP : Status of the Vagrant box $VAGRANT_BOX_NAME"
+        $VAGRANT_CMD status
 
 #Check the ssh configuation for Vagrant box
-        /usr/bin/vagrant ssh-config
+        echo "$TIMESTAMP : ssh configuration of Vagrant box $VAGRANT_BOX_NAME"
+        $VAGRANT_CMD ssh-config
+
+        echo "$TIMESTAMP : check $VAGRANT_LOG for more information about installation"
