@@ -5,7 +5,7 @@
 TIMESTAMP=`date "+%Y-%m-%d %H:%M:%S"`
 VAGRANT_CMD='/usr/bin/vagrant'
 VAGRANT_BOX='ubuntu/trusty64'
-VAGRANT_BOX_VER='https://app.vagrantup.com/ubuntu/boxes/trusty64/versions/20180919.0.0/providers/virtualbox.bo'
+VAGRANT_BOX_VER='https://app.vagrantup.com/ubuntu/boxes/trusty64/versions/20180919.0.0/providers/virtualbox.box'
 VAGRANT_BOX_DIR='/vagrant/ubuntu64'
 VAGRANT_LOG='/tmp/install.log'
 declare -a PACKAGE_LIST=("virtualbox" "vagrant")
