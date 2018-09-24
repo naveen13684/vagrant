@@ -56,15 +56,15 @@ do
 done
 
 # Download Vagrant Box
-        echo "$(timestamp) : Creating working directory for Vagrant box $VAGRANT_BOX_NAME."
-        mkdir -p $VAGRANT_WORKING_DIR
-        cd $VAGRANT_WORKING_DIR;pwd
         echo "$(timestamp) : Download $VAGRANT_BOX_NAME Vagrant box image."
         $VAGRANT_CMD box add $VAGRANT_BOX_IMAGE $VAGRANT_BOX_IMAGE_URL >>$VAGRANT_LOG 2>&1
         check_command_sccess "Vagrant box $VAGRANT_BOX_NAME Successfully added." "Vagrant box $VAGRANT_BOX_NAME failed."
         echo "$(timestamp) : $VAGRANT_BOX_NAME Vagrant box image Downloaded."
 
 #Creating VM
+        echo "$(timestamp) : Creating working directory for Vagrant box $VAGRANT_WORKING_DIR."
+        mkdir -p $VAGRANT_WORKING_DIR
+        cd $VAGRANT_WORKING_DIR
         echo "$(timestamp) : Creating/Initialising VM - Vagrantfile"
         $VAGRANT_CMD init $VAGRANT_BOX_NAME >>$VAGRANT_LOG 2>&1
 
