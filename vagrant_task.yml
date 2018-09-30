@@ -1,0 +1,68 @@
+---
+
+- name: Perform Taks on Vagrant box
+  hosts: all
+  gather_facts: false
+  strategy: free
+
+  vars:
+      user_name:
+          - { name: 'vagrant_test1', groups: 'sudo', shell: '/bin/bash', password: '$6$F6u31cuEjz$OaF7psfy11KxKRxRyFAWjl/Zax04mQtRyx0uliXKnthPQ8GeE0yRYDS4uXh6/lcLqbqP9C4qUlJ5VNYkJqbqZ0'}
+          - { name: 'vagrant_test2', groups: 'sudo', shell: '/bin/bash', password: '$6$F6u31cuEjz$OaF7psfy11KxKRxRyFAWjl/Zax04mQtRyx0uliXKnthPQ8GeE0yRYDS4uXh6/lcLqbqP9C4qUlJ5VNYkJqbqZ0'}
+                                                                        #password is "Welcome123"
+      time_zone: "Asia/Tokyo"
+      files_src: ['/tmp/test1','/tmp/test2']
+      temp_dir: "/tmp/"
+      consul_ver: "1.2.3"
+      consul_zip: "consul_{{ consul_ver }}_linux_amd64.zip"
+      packages_1: ['python','supervisor','unzip']
+      packages_2: ['https://releases.hashicorp.com/consul/"{{ consul_ver }}"/"{{ consul_zip }}"']
+
+  tasks:
+    - name: Connectivity_Check_port22
+      local_action: raw nc -zv {{inventory_hostname}} 22
+      register: port22_check
+
+    - name: Connectivity_Check_ping
+      local_action: command ping {{inventory_hostname}} -c 2
+      register: ping_check
+
+    - name: Create User on Vagrant Box
+      user:
+        name: "{{ item.name }}"
+        password: "{{ item.password }}" # [apt-get install whois]  and [mkpasswd --method=sha-512]
+        group: "{{ item.groups }}"
+        shell: "{{ item.shell }}"
+        createhome: yes
+        comment: 'testusers'
+        state: present
+      with_items:
+          - "{{ user_name }}"
+
+    - name: Setting timezone on Server
+      timezone:
+        name: "{{ time_zone }}"    # timedatectl set-timezone Asia/Tokyo
+
+    - name: copy files to vagrant host
+      copy:
+        src: "{{ item.0 }}"
+        dest: "/home/{{ item.1.name }}"
+      with_nested:
+          - "{{ files_src }}"
+          - "{{ user_name }}"
+
+    - name: install packages_1 python,supervisord,unzip
+      apt: name={{ item }} state=present force=yes
+      with_items:
+          - "{{ packages_1 }}"
+
+    - name: Dwonlaod pacakges_2 consul
+      raw: wget -q -nc "{{ item }}" -P /tmp
+      with_items:
+          - "{{ packages_2 }}"
+
+    - name: install consul
+      unarchive:
+        src: "{{ temp_dir }}{{ consul_zip }}"
+        dest: /usr/bin
+        remote_src: yes   #Set to yes to indicate the archived file is already on the remote system and not local to the Ansible controller
